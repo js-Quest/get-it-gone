@@ -85,7 +85,7 @@ class Game {
 
     const options = {
       assets:[], //array for assets to be pushed into
-      oncomplete: function(){
+      oncomplete: function(){ //cb function to be called when loading finishes
         game.init();
         game.animate();
       }
@@ -97,7 +97,7 @@ class Game {
 
     this.clock = new THREE.Clock(); //constructor built-in from Three.js lib
 
-    const preloader = new Preloader(options); //!want to make a preloader sometime later
+    // const preloader = new Preloader(options); //!want to make a preloader sometime later
 
     window.onError = function(error){
       console.error(JSON.stringify(error))
@@ -145,9 +145,96 @@ class Game {
     //model
     const loader = new THREE.FBXLoader();
     const game = this;
-    
+
+    loader.load(`${this.assetsPath}fbx/girl-walk.fbx`, function(object){
+      object.mixer = new THREE.AnimationMixer(object);
+      game.player.mixer = object.mixer;
+      game.player.root = object.mixer.getRoot();
+
+      object.name = 'Character';
+      object.traverse( function(child){ //iterate through child objects of the loaded object
+        if (child.isMesh){
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      game.scene.add(object);
+      game.player.object = object;
+      game.player.walk = object.animations[0];
+
+      //!add mobile controls
+      // game.joystick = new JoyStick({ 
+      //   onMove: game.playerControl,
+      //   game: game
+      // })
+      game.createCameras();
+      game.loadNextAnim(loader);
+    });
+
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });	//antialias makes edges smoother
+    this.renderer.setPixelRatio(window.devicePixelRatio); //pixel ration dependent on device
+    this.renderer.setSize(window.innerWidth, window.innerHeight); //window size dependent on device
+    this.renderer.shadowMap.enabled = true; //shadows allowed
+    this.container.appendChild(this.renderer.domElement); //render on screen
+
+    window.addEventListener('resize', function(){ game.onWindowResize()}, false); //'useCapture' param false, so eventlistener will trigger event on innermost element and then propagate to parents, so parent events go first.
+
+    // playerControl(){};
+
   }
 
 
 
+}
+
+class JoyStick{
+  constructor(options){
+    const circle = document.createElement('div');
+    //joystick is grey circle in the middle of the bottom of screen
+    circle.style.cssText = 'position: absolute; bottom: 35px; width: 80px; height: 80px; background: rgba(120, 120, 120, 0.5); border: medium solid #444; border-radius: 50%; left: 50%; transform:translateX(-50%);'
+    const thumb = document.createElement('div');
+    thumb.style.cssText('position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; border-radius: 50%; background: #853e3e;');
+    circle.appendChild(thumb); //circle in a circle for joystick
+    document.appendChild(circle); //render on screen
+    this.domElement = thumb; //assigned so can access outside of constructor 
+    this.maxRadius = options.maxRadius || 40; //can't be more than 40px away from center of thumb origin
+    this.maxRadiusSquared = this.maxRadius*this.maxRadius; //maths for circle
+    this.onMove = options.onMove; //cb fxn assignment for when joystick moved
+    this.game = options.game; //allow access to game object from joystick class
+    this.origin = {left:this.domElement.offsetLeft, top: this.domElement.offsetTop }; //use offset properties to set origin relative to parent element to calculate position of thumb during joystick movement
+
+    if (this.domElement != undefined){
+      const joystick = this;
+      if ('ontouchstart' in window){
+        this.domElement.addEventListener('touchstart', function(evt){joystick.tap(evt) }); //if window object has touch event properties, touchstart.
+      }else{
+        this.domElement.addEventListener('mousedown', function(evt){joystick.tap(evt) }); //mousedown if no touch properties exist on window object
+      }
+    }
+  }
+
+  //touch instance properties used
+  getMousePosition(evt){ //ternary operators to get x and y values relative to viewport depending on touch or mouse events, clientX and clientY
+    let clientX = evt.targetTouches ? evt.targetTouches[0].pageX : evt.clientX;
+    let clientY = evt.targetTouches ? evt.targetTouches[0].pageY : evt.clientY;
+    //returns `{x: clientX, y: clientY}`
+  }
+
+  tap(evt){ //cb fxn for mouse or touch events
+    evt = evt || window.event;
+    //get mouse position at start
+    this.offset = this.getMousePosition(evt);
+    const joystick = this; //assign to reference current Joystick instance
+    if ('ontouchstart' in window){
+      document.ontouchmove = function(evt){joystick.move(evt)}; //touch capable
+      document.ontouchend = function(evt){joystick.up(evt)};
+    }else{
+      document.onmousemove = function(evt){joystick.move(evt)}; //mouse only
+      document.onmouseup = function(evt){joystick.up(evt)};
+    }
+  }
+
+  move(evt){
+    
+  }
 }
