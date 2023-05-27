@@ -178,14 +178,21 @@ class Game {
     this.renderer.shadowMap.enabled = true; //shadows allowed
     this.container.appendChild(this.renderer.domElement); //render on screen
 
-    window.addEventListener('resize', function(){ game.onWindowResize()}, false); //'useCapture' param false, so eventlistener will trigger event on innermost element and then propagate to parents, so parent events go first.
-
-    // playerControl(){};
-
+    window.addEventListener('resize', function(){ game.onWindowResize()}, false); //'useCapture' param false, so eventlistener will trigger event on innermost element and then propagate to parents, so parent events go first. 
   }
-
-
-
+  
+  playerControl(forward, turn){
+    if (forward>0){
+      if (this.player.action!='walk') this.action = 'walk';
+    }else{
+      if (this.player.action=='walk') this.action = 'look-around';
+    }
+    if (forward==0 && turn==0){
+      delete this.player.move; //stop player from moving if no event 
+    }else{
+      this.player.move = {forward, turn};
+    }
+  }
 }
 
 class JoyStick{
