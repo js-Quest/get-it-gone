@@ -80,8 +80,8 @@ class Game {
     document.body.appendChild(this.container);
 
     const game = this;
-    this.anims = ['run', 'gather-objects', 'look-around']; //fbx file animation names in assets folder
-    this.assetsPath = 'assets';
+    this.anims = ['girl-walk', 'run', 'gather-objects', 'look-around']; //fbx file animation names in assets folder
+    this.assetsPath = 'assets/';
 
     const options = {
       assets:[], //array for assets to be pushed into
@@ -146,10 +146,11 @@ class Game {
     const loader = new THREE.FBXLoader();
     const game = this;
 
-    loader.load(`${this.assetsPath}fbx/girl-walk.fbx`, function(object){
+    loader.load(`${this.assetsPath}fbx/${anim}.fbx`, function(object){
       object.mixer = new THREE.AnimationMixer(object);
       game.player.mixer = object.mixer;
-      game.player.root = object.mixer.getRoot();
+      game.player.root = object.mixer.getRoot(); 
+      // get Root is builtin method from Three.js, gets top-level object of the animation object (aka player) hierarchy (aka skeleton).
 
       object.name = 'Character';
       object.traverse( function(child){ //iterate through child objects of the loaded object
@@ -193,6 +194,25 @@ class Game {
       this.player.move = {forward, turn};
     }
   }
+
+  createCameras(){
+
+  };
+
+  loadNextAnim(loader){
+    let anim = this.anims.pop();
+    const game = this;
+    loader.load(`${this.assetsPath}fbx/${anim}.fbx`, function(object){
+      game.player[anim] = object.animations[0];
+      if (game.anims.length>0){
+        game.loadNextAnim(loader);
+      }else{
+        delete game.anims;
+        game.action = 'look-around';
+        game.mode = game.modes.ACTIVE;
+      }
+    })
+  };
 }
 
 class JoyStick{
