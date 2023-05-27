@@ -97,7 +97,7 @@ class Game {
 
     this.clock = new THREE.Clock(); //constructor built-in from Three.js lib
 
-    // const preloader = new Preloader(options); //!want to make a preloader sometime later
+    // const preloader = new Preloader(options); //!want to make a preloader sometime later for user interface
 
     window.onError = function(error){
       console.error(JSON.stringify(error))
@@ -162,17 +162,18 @@ class Game {
       game.player.object = object;
       game.player.walk = object.animations[0];
 
-      //!add mobile controls
-      // game.joystick = new JoyStick({ 
-      //   onMove: game.playerControl,
-      //   game: game
-      // })
+      //add mobile controls
+      game.joystick = new JoyStick({ 
+        onMove: game.playerControl,
+        game: game
+      })
+
       game.createCameras();
       game.loadNextAnim(loader);
     });
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });	//antialias makes edges smoother
-    this.renderer.setPixelRatio(window.devicePixelRatio); //pixel ration dependent on device
+    this.renderer.setPixelRatio(window.devicePixelRatio); //pixel ratio dependent on device
     this.renderer.setSize(window.innerWidth, window.innerHeight); //window size dependent on device
     this.renderer.shadowMap.enabled = true; //shadows allowed
     this.container.appendChild(this.renderer.domElement); //render on screen
@@ -221,7 +222,7 @@ class JoyStick{
   }
 
   tap(evt){ //cb fxn for mouse or touch events
-    evt = evt || window.event;
+    evt = evt || window.event; //checks to see if event exists for browsers new and older.
     //get mouse position at start
     this.offset = this.getMousePosition(evt);
     const joystick = this; //assign to reference current Joystick instance
@@ -234,7 +235,44 @@ class JoyStick{
     }
   }
 
-  move(evt){
-    
+  move(evt){ //cb fxn for when user moves/uses joystick
+    evt = evt || window.event; 
+    const mouse = this.getMousePosition(evt); //get new cursor position
+    let left = mouse.x - this.offset.x; //this.offset = mouse
+    let top = mouse.y - this.offset.y; //get displacement of joystick
+
+    const sqMag = left*left + top*top; //squareMagnitude
+    if (sqMag > this.maxRadiusSquared){ //check to see if joystick is within defined range - if outside of range then reassign values scaled down to keep within range.
+      const magnitude  = Math.sqrt(sqMag); //square root of squared magnitude
+      left /= magnitude;
+      top /= magnitude;
+      left *= this.maxRadius;
+      top *= this.maxRadius;
+    }
+
+    // set new position of element
+    this.domElement.style.left = `${left + this.domElement.clientWidth/2}px`;
+    this.domElement.style.top = `${top + this.domElement.clientHeight/2}px`;
+
+    const forward = -(top - this.origin.top + this.domElement.clientHeight/2)/this.maxRadius;
+    const turn = (left-this.origin.left + this.domElement.clientWidth/2)/this.maxRadius;
+
+    if (this.onMove!=undefined){
+      this.onMove.call(this.game, forward, turn);
+    } //use 'call' method to set value of 'this' to this.game inside the onMove cb function for when joystick is moved, and pass 'forward' and 'turn' as arguments TO the onMove cb function.
   }
+
+  up(evt){ // cb function triggered when user 'releases' joystick (to stop movement)
+    if ('ontouchstart' in window){ //use of 'in' operator on 'ontouchstart' property of the window object
+      document.ontouchmove = null;
+      document.touchend = null;
+    }else{
+      document.onmousemove = null;
+      document.onmouseup = null;
+    }
+    this.domElement.style.top = `${this.origin.top}px`; //reset location of 'thumb' to center of joystick (the origin of thumb)
+    this.domElement.style.left = `${this.origin.left}px`;
+    this.onMove.call(this.game, 0, 0); // 0, 0 for no input of movement when joystick is released.
+  }
+
 }
