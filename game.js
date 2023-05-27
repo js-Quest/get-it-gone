@@ -146,7 +146,7 @@ class Game {
     const loader = new THREE.FBXLoader();
     const game = this;
 
-    loader.load(`${this.assetsPath}fbx/${anim}.fbx`, function(object){
+    loader.load(`${this.assetsPath}fbx/girl-walk.fbx`, function(object){
       object.mixer = new THREE.AnimationMixer(object);
       game.player.mixer = object.mixer;
       game.player.root = object.mixer.getRoot(); 
@@ -165,7 +165,7 @@ class Game {
 
       //add mobile controls
       game.joystick = new JoyStick({ 
-        onMove: game.playerControl,
+        onMove: game.playerControl, //onMove cb function 
         game: game
       })
 
@@ -224,7 +224,7 @@ class JoyStick{
     thumb.style.cssText('position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; border-radius: 50%; background: #853e3e;');
     circle.appendChild(thumb); //circle in a circle for joystick
     document.appendChild(circle); //render on screen
-    this.domElement = thumb; //assigned so can access outside of constructor 
+    this.domElement = thumb; //assigned so can access outside of constructor, the domElement is what the user will be moving around, by way of event listeners. 
     this.maxRadius = options.maxRadius || 40; //can't be more than 40px away from center of thumb origin
     this.maxRadiusSquared = this.maxRadius*this.maxRadius; //maths for circle
     this.onMove = options.onMove; //cb fxn assignment for when joystick moved
