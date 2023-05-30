@@ -213,6 +213,50 @@ class Game {
       }
     })
   };
+
+  set action(name){
+    const anim = this.player[name];
+    const action = this.player.mixer.clipAction(anim, this.player.root);
+    //returns an animation action for the passed clip, using the anim from the anims.
+    action.time = 0; //this animation is not a multiple loop
+    this.player.mixer.stopAllAction(); //stops current actions to make room for the new action
+      if (this.player.action == 'gather-objects'){
+        delete this.player.mixer._listeners['finished']; //removes 'finished' listener via three.min.js lib methods
+      }
+      if (name=='gather-objects'){
+        action.loop = THREE.LoopOnce; //one animation loop
+        const game = this;
+        this.player.mixer.addEventListener('finished', function(){
+          console.log('gather-objs anim complete');
+          game.action = 'look-around';
+        });
+      }
+    this.player.action = name;
+    action.fadeIn(0.5); //smooth animation transition
+    action.play();
+  }
+
+  animate() {
+    const game = this;
+    const dt = this.clock.getDelta(); //using 'delta time' helps different devices playing at different frame speeds instead of hard-coding in a value of time between frames.
+    requestAnimationFrame(function () { game.animate() });
+
+    if (this.player.mixer != undefined && this.mode == this.modes.ACTIVE) {
+      this.player.mixer.update(dt);
+    }
+    if (this.player.move != undefined) {
+      if (this.player.move.forward > 0) this.player.object.context.translateZ(dt * 100); //player translating on z-axis
+      this.player.object.rotateY(this.player.move.turn * dt); //rotate player on the y-axis
+    }
+    if (this.player.cameras != undefined && this.player.cameras.active != undefined) {
+      //linear interpolation (lerp) used to smooth camera transition to the active camera's world position at a weight of 0.05
+      this.camera.position.lerp(this.player.cameras.active.getWorldPosition(new THREE.Vector3()), 0.05); //Vector3 from three.js for 3D stuff
+      //spherical linear interpolation (slerp) method to transition between two rotations (quaternions), provides smooth transition.
+      this.camera.quaternion.slerp(this.player.cameras.active.getWorldQuaternion(new THREE.Quaternion()), 0.05);
+    }
+    this.renderer.render(this.scene, this.camera);
+  }
+
 }
 
 class JoyStick{
@@ -301,5 +345,4 @@ class JoyStick{
     this.domElement.style.left = `${this.origin.left}px`;
     this.onMove.call(this.game, 0, 0); // 0, 0 for no input of movement when joystick is released.
   }
-
 }
