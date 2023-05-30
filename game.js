@@ -269,7 +269,7 @@ class Game {
       this.player.mixer.update(dt);
     }
     if (this.player.move != undefined) {
-      if (this.player.move.forward > 0) this.player.object.context.translateZ(dt * 100); //player translating on z-axis
+      if (this.player.move.forward > 0) this.player.object.translateZ(dt * 100); //player translating on z-axis
       this.player.object.rotateY(this.player.move.turn * dt); //rotate player on the y-axis
     }
     if (this.player.cameras != undefined && this.player.cameras.active != undefined) {
@@ -313,7 +313,7 @@ class JoyStick {
   getMousePosition(evt) { //ternary operators to get x and y values relative to viewport depending on touch or mouse events, clientX and clientY
     let clientX = evt.targetTouches ? evt.targetTouches[0].pageX : evt.clientX;
     let clientY = evt.targetTouches ? evt.targetTouches[0].pageY : evt.clientY;
-    //returns `{x: clientX, y: clientY}`
+    return {x: clientX, y: clientY}
   }
 
   tap(evt) { //cb fxn for mouse or touch events
