@@ -287,11 +287,11 @@ class JoyStick {
   constructor(options) {
     const circle = document.createElement('div');
     //joystick is grey circle in the middle of the bottom of screen
-    circle.style.cssText = 'position: absolute; bottom: 35px; width: 80px; height: 80px; background: rgba(120, 120, 120, 0.5); border: medium solid #444; border-radius: 50%; left: 50%; transform:translateX(-50%);'
-    const thumb = document.createElement('div');
-    thumb.style.cssText('position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; border-radius: 50%; background: #853e3e;');
+    circle.style.cssText = "position:absolute; bottom:35px; width:80px; height:80px; background:rgba(126, 126, 126, 0.5); border:#444 solid medium; border-radius:50%; left:50%; transform:translateX(-50%);";
+    const thumb = document.createElement("div");
+    thumb.style.cssText = "position: absolute; left: 20px; top: 20px; width: 40px; height: 40px; border-radius: 50%; background: #fff;";
     circle.appendChild(thumb); //circle in a circle for joystick
-    document.appendChild(circle); //render on screen
+    document.body.appendChild(circle); //render on screen
     this.domElement = thumb; //assigned so can access outside of constructor, the domElement is what the user will be moving around, by way of event listeners. 
     this.maxRadius = options.maxRadius || 40; //can't be more than 40px away from center of thumb origin
     this.maxRadiusSquared = this.maxRadius * this.maxRadius; //maths for circle
