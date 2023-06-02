@@ -84,12 +84,15 @@ class Game {
     this.assetsPath = './assets/';
 
     const options = {
-      assets: [], //array for assets to be pushed into
-      oncomplete: function () { //cb function to be called when loading finishes
+      assets: [
+        `${this.assetsPath}fbx/environment.fbx`
+      ], //array for assets to be pushed into
+      oncomplete: function () {
+        //cb function to be called when loading finishes
         game.init();
         game.animate();
-      }
-    }
+      },
+    };
 
     this.anims.forEach(function (anim) { options.assets.push(`${game.assetsPath}fbx/${anim}.fbx`) })
 
@@ -114,7 +117,7 @@ class Game {
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);//45 is viewing width, then aspect ratio, nearest you can render is 1 from camera, furthest away is 2000 
 
     this.scene = new THREE.Scene(); //time to make a scene
-    this.scene.background = new THREE.Color(0xa0a0a0) //grey
+    this.scene.background = new THREE.Color(0xd8d8d8); //grey
     this.scene.fog = new THREE.Fog(0xa0a0a0, 200, 1000) //linear fog grows denser with distance, params: color, nearest distance to apply, farthest to stop applying fog.
 
     let light = new THREE.HemisphereLight(0xffffff, 0x444444); //above scene, fades from sky color to ground color dark grey.
@@ -170,7 +173,7 @@ class Game {
       })
 
       game.createCameras();
-      game.loadNextAnim(loader);
+      game.loadEnvironment(loader);
     });
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -181,6 +184,30 @@ class Game {
     this.container.appendChild(this.renderer.domElement); //render on screen
 
     window.addEventListener('resize', function () { game.onWindowResize(); }, false);//'useCapture' param false, so eventlistener will trigger event on innermost element and then propagate to parents, so parent events go first. 
+  }
+
+  // render environment
+  loadEnvironment(loader){
+    const game = this;
+    loader.load(`${this.assetsPath}fbx/environment.fbx`,
+    function (object) {
+      game.scene.add(object);
+      object.receiveShadow = true;
+      object.scale.set(0.8, 0.8, 0.8);
+      Object.NAME = 'Environment';
+
+      object.traverse(function(child){
+        if (child.isMesh){
+          if(child.name.includes('main')){
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }else if(child.name.includes('proxy')){
+            child.material.visible = false;
+          }
+        }
+      });
+      game.loadNextAnim(loader);
+    });
   }
 
   playerControl(forward, turn) {
